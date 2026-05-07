@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IngMaurek – Studio di Ingegneria Informatica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #080d12;
+      --bg-secondary: #0b1218;
+      --bg-card: #0e1a24;
+      --bg-card-hover: #122030;
+      --aqua: #00d4c8;
+      --aqua-dim: #00b8ad;
+      --aqua-glow: rgba(0, 212, 200, 0.15);
+      --aqua-border: rgba(0, 212, 200, 0.25);
+      --aqua-text: #00e8db;
+      --white: #e8f4f8;
+      --muted: #4a7080;
+      --grid-line: rgba(0, 212, 200, 0.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: var(--bg-primary);
+      color: var(--white);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ─── GRID TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── AMBIENT GLOW ─── */
+    .ambient {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ambient-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,212,200,0.07) 0%, transparent 70%);
+      top: -200px; left: -100px;
+    }
+    .ambient-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,180,170,0.05) 0%, transparent 70%);
+      bottom: 10%; right: -150px;
+    }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 60px;
+      height: 70px;
+      background: rgba(8, 13, 18, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--aqua-border);
+    }
+
+    .nav-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--aqua-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo .bracket { color: var(--muted); font-weight: 300; }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 36px;
+    }
+    .nav-links a {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--aqua);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s;
+    }
+    .nav-links a:hover { color: var(--aqua-text); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .nav-cta {
+      padding: 8px 22px;
+      border: 1px solid var(--aqua-border);
+      color: var(--aqua-text) !important;
+      border-radius: 3px;
+      transition: background 0.3s, border-color 0.3s !important;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: var(--aqua-glow) !important; border-color: var(--aqua) !important; }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 60px 80px;
+    }
+
+    .hero-content { max-width: 760px; }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--aqua);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-tag::before {
+      content: '';
+      display: inline-block;
+      width: 32px; height: 1px;
+      background: var(--aqua);
+    }
+
+    .hero-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      color: var(--white);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.35s forwards;
+    }
+    .hero-title .accent { color: var(--aqua-text); }
+    .hero-title .thin { font-weight: 300; color: var(--muted); }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-size: 1.1rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #6a9aaa;
+      max-width: 520px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.5s forwards;
+    }
+
+    .hero-actions {
+      margin-top: 48px;
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.65s forwards;
+    }
+
+    .btn-primary {
+      padding: 14px 36px;
+      background: var(--aqua);
+      color: var(--bg-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: background 0.3s, transform 0.2s;
+    }
+    .btn-primary:hover { background: var(--aqua-text); transform: translateY(-2px); }
+
+    .btn-outline {
+      padding: 14px 36px;
+      background: transparent;
+      color: var(--aqua-text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--aqua-border);
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: border-color 0.3s, background 0.3s, transform 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--aqua); background: var(--aqua-glow); transform: translateY(-2px); }
+
+    /* Hero decoration */
+    .hero-deco {
+      position: absolute;
+      right: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 380px;
+      height: 380px;
+      opacity: 0;
+      animation: fadeIn 1.2s 0.8s forwards;
+    }
+    .hero-deco svg { width: 100%; height: 100%; }
+
+    /* ─── STATS STRIP ─── */
+    .stats-strip {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--aqua-border);
+      border-bottom: 1px solid var(--aqua-border);
+      background: rgba(14, 26, 36, 0.6);
+      display: flex;
+      justify-content: center;
+      gap: 0;
+    }
+    .stat-item {
+      flex: 1;
+      max-width: 240px;
+      padding: 36px 40px;
+      text-align: center;
+      border-right: 1px solid var(--aqua-border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-number {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--aqua-text);
+      line-height: 1;
+    }
+    .stat-label {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ─── SECTION ─── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 60px;
+    }
+
+    .section-tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--aqua);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+    .section-title .dim { color: var(--muted); font-weight: 300; }
+
+    .section-desc {
+      font-size: 1rem;
+      font-weight: 300;
+      line-height: 1.9;
+      color: #5a8899;
+      max-width: 520px;
+    }
+
+    /* ─── SERVICES ─── */
+    .services-grid {
+      margin-top: 60px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+    }
+
+    .service-card {
+      background: var(--bg-card);
+      padding: 40px 36px;
+      border: 1px solid var(--aqua-border);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s, transform 0.3s;
+      cursor: default;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--aqua), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+    .service-card:hover { background: var(--bg-card-hover); transform: translateY(-4px); }
+    .service-card:hover::before { transform: scaleX(1); }
+
+    .service-icon {
+      width: 48px; height: 48px;
+      margin-bottom: 24px;
+      color: var(--aqua);
+    }
+    .service-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+    .service-num {
+      position: absolute;
+      top: 24px; right: 28px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: rgba(0,212,200,0.05);
+      line-height: 1;
+    }
+
+    .service-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--aqua-text);
+      margin-bottom: 14px;
+    }
+
+    .service-desc {
+      font-size: 0.92rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #4a7080;
+    }
+
+    /* ─── ABOUT ─── */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .about-visual {
+      position: relative;
+      height: 400px;
+    }
+    .about-box {
+      position: absolute;
+      border: 1px solid var(--aqua-border);
+      background: var(--bg-card);
+    }
+    .about-box-1 { inset: 0 60px 60px 0; }
+    .about-box-2 {
+      top: 60px; right: 0; bottom: 0; left: 60px;
+      background: var(--bg-card-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .about-monogram {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 6rem;
+      font-weight: 700;
+      color: var(--aqua);
+      opacity: 0.2;
+      letter-spacing: -0.04em;
+    }
+    .about-corner {
+      position: absolute;
+      width: 16px; height: 16px;
+      border-color: var(--aqua);
+      border-style: solid;
+    }
+    .about-corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .about-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .about-list {
+      margin-top: 32px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .about-list li {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.95rem;
+      color: #6a9aaa;
+    }
+    .about-list li::before {
+      content: '▸';
+      color: var(--aqua);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── TECH STACK ─── */
+    #tech {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--aqua-border);
+      border-bottom: 1px solid var(--aqua-border);
+    }
+    .tech-header { text-align: center; margin-bottom: 60px; }
+    .tech-header .section-desc { margin: 0 auto; }
+
+    .tech-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .tech-chip {
+      padding: 10px 22px;
+      background: var(--bg-card);
+      border: 1px solid var(--aqua-border);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      transition: all 0.3s;
+      cursor: default;
+    }
+    .tech-chip:hover {
+      border-color: var(--aqua);
+      color: var(--aqua-text);
+      background: var(--aqua-glow);
+      transform: translateY(-2px);
+    }
+
+    /* ─── PROJECTS ─── */
+    .projects-grid {
+      margin-top: 60px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--aqua-border);
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .project-card:hover { border-color: var(--aqua); transform: translateY(-4px); }
+
+    .project-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--aqua-glow);
+      border: 1px solid var(--aqua-border);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--aqua);
+      margin-bottom: 20px;
+    }
+
+    .project-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .project-desc {
+      font-size: 0.9rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #4a7080;
+    }
+
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--aqua);
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+    .project-link:hover { gap: 14px; }
+
+    /* ─── CONTACT ─── */
+    #contact {
+      text-align: center;
+      background: linear-gradient(180deg, var(--bg-primary) 0%, #050a0e 100%);
+    }
+
+    .contact-inner { max-width: 600px; margin: 0 auto; }
+
+    .contact-form {
+      margin-top: 50px;
+      display: grid;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .form-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .form-input, .form-textarea {
+      background: var(--bg-card);
+      border: 1px solid var(--aqua-border);
+      color: var(--white);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.95rem;
+      padding: 14px 18px;
+      outline: none;
+      transition: border-color 0.3s;
+      width: 100%;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--aqua); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+
+    .form-submit {
+      justify-self: center;
+      padding: 14px 48px;
+      background: var(--aqua);
+      color: var(--bg-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+      transition: background 0.3s, transform 0.2s;
+    }
+    .form-submit:hover { background: var(--aqua-text); transform: translateY(-2px); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--aqua-border);
+      background: var(--bg-secondary);
+      padding: 40px 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--aqua-text);
+      letter-spacing: 0.06em;
+    }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--aqua); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes spin-slow {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .spin { animation: spin-slow 18s linear infinite; transform-origin: center; }
+    .spin-rev { animation: spin-slow 24s linear infinite reverse; transform-origin: center; }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 24px 60px; }
+      .hero-deco { display: none; }
+      section { padding: 70px 24px; }
+      #about { grid-template-columns: 1fr; }
+      .about-visual { height: 250px; }
+      footer { flex-direction: column; gap: 20px; text-align: center; }
+      .form-row { grid-template-columns: 1fr; }
+      .stats-strip { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+
+  <!-- ─── NAV ─── -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <span class="bracket">[</span>IngMaurek<span class="bracket">]</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#servizi">Servizi</a></li>
+      <li><a href="#about">Chi Siamo</a></li>
+      <li><a href="#tech">Tecnologie</a></li>
+      <li><a href="#progetti">Progetti</a></li>
+      <li><a href="#contact" class="nav-cta">Contatti</a></li>
+    </ul>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <header class="hero">
+    <div class="hero-content">
+      <span class="hero-tag">Studio di Ingegneria Informatica</span>
+      <h1 class="hero-title">
+        Ingegneria<br>
+        <span class="thin">al servizio</span><br>
+        <span class="accent">dell'innovazione</span>
+      </h1>
+      <p class="hero-sub">
+        Progettiamo architetture software robuste, sistemi embedded e soluzioni digitali su misura per imprese che vogliono crescere nel mondo connesso.
+      </p>
+      <div class="hero-actions">
+        <a href="#servizi" class="btn-primary">Scopri i Servizi</a>
+        <a href="#contact" class="btn-outline">Scrivici</a>
+      </div>
+    </div>
+
+    <!-- Decorative SVG -->
+    <div class="hero-deco">
+      <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00d4c8" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#00d4c8" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="190" cy="190" r="180" fill="url(#rg)" />
+        <!-- Rotating rings -->
+        <g class="spin">
+          <circle cx="190" cy="190" r="155" fill="none" stroke="#00d4c8" stroke-width="0.5" stroke-dasharray="8 14"/>
+        </g>
+        <g class="spin-rev">
+          <circle cx="190" cy="190" r="120" fill="none" stroke="#00d4c8" stroke-width="0.5" stroke-dasharray="4 20"/>
+        </g>
+        <circle cx="190" cy="190" r="80" fill="none" stroke="#00d4c8" stroke-width="0.5"/>
+        <!-- Center -->
+        <text x="190" y="205" font-family="Rajdhani" font-size="52" font-weight="700" fill="#00d4c8" fill-opacity="0.35" text-anchor="middle">IM</text>
+        <!-- Nodes -->
+        <circle cx="190" cy="35" r="5" fill="#00d4c8" fill-opacity="0.7"/>
+        <circle cx="190" cy="345" r="5" fill="#00d4c8" fill-opacity="0.7"/>
+        <circle cx="35" cy="190" r="5" fill="#00d4c8" fill-opacity="0.7"/>
+        <circle cx="345" cy="190" r="5" fill="#00d4c8" fill-opacity="0.7"/>
+        <!-- Cross lines -->
+        <line x1="190" y1="35" x2="190" y2="345" stroke="#00d4c8" stroke-width="0.3" stroke-opacity="0.3"/>
+        <line x1="35" y1="190" x2="345" y2="190" stroke="#00d4c8" stroke-width="0.3" stroke-opacity="0.3"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- ─── STATS ─── -->
+  <div class="stats-strip reveal">
+    <div class="stat-item">
+      <div class="stat-number">12+</div>
+      <div class="stat-label">Anni di Esperienza</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">80+</div>
+      <div class="stat-label">Progetti Completati</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">40+</div>
+      <div class="stat-label">Clienti Soddisfatti</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">99%</div>
+      <div class="stat-label">Uptime Garantito</div>
+    </div>
+  </div>
+
+  <!-- ─── SERVIZI ─── -->
+  <section id="servizi">
+    <div class="reveal">
+      <div class="section-tag">// 01 — Servizi</div>
+      <h2 class="section-title">Cosa <span class="dim">facciamo</span></h2>
+      <p class="section-desc">Dalla consulenza all'implementazione, offriamo soluzioni integrate che coprono l'intero ciclo di vita del software.</p>
+    </div>
+    <div class="services-grid reveal">
+
+      <div class="service-card">
+        <div class="service-num">01</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="service-name">Sviluppo Software</div>
+        <div class="service-desc">Architetture backend, API REST/GraphQL, microservizi e applicazioni web ad alta scalabilità.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-num">02</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div class="service-name">Sistemi Embedded</div>
+        <div class="service-desc">Progettazione firmware, IoT industriale e sistemi real-time per ambienti critici.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-num">03</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        </div>
+        <div class="service-name">Data Engineering</div>
+        <div class="service-desc">Pipeline ETL, data lake, analytics e dashboard real-time per decision making basato sui dati.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-num">04</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="service-name">Cybersecurity</div>
+        <div class="service-desc">Analisi delle vulnerabilità, penetration testing, hardening di sistemi e compliance normativa.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-num">05</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+        </div>
+        <div class="service-name">Cloud & DevOps</div>
+        <div class="service-desc">Infrastrutture cloud-native, CI/CD, containerizzazione e orchestrazione Kubernetes.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-num">06</div>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <div class="service-name">AI & Machine Learning</div>
+        <div class="service-desc">Integrazione di modelli predittivi, NLP e computer vision in prodotti industriali e commerciali.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── CHI SIAMO ─── -->
+  <section id="about">
+    <div class="about-visual reveal">
+      <div class="about-box about-box-1">
+        <div class="about-corner tl"></div>
+        <div class="about-corner br"></div>
+      </div>
+      <div class="about-box about-box-2">
+        <span class="about-monogram">IM</span>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="section-tag">// 02 — Chi Siamo</div>
+      <h2 class="section-title">Esperti <span class="dim">con visione</span></h2>
+      <p class="section-desc">
+        IngMaurek è uno studio di ingegneria informatica fondato da professionisti con esperienza decennale in ambienti industriali, fintech e pubblica amministrazione.
+      </p>
+      <ul class="about-list">
+        <li>Team multidisciplinare con competenze verticali</li>
+        <li>Approccio metodologico basato su Agile & Scrum</li>
+        <li>Certificazioni ISO 27001 e GDPR compliance</li>
+        <li>Collaborazioni con università e centri di ricerca</li>
+        <li>Supporto tecnico H24 su progetti mission-critical</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ─── TECNOLOGIE ─── -->
+  <section id="tech">
+    <div class="tech-header reveal">
+      <div class="section-tag">// 03 — Stack Tecnologico</div>
+      <h2 class="section-title">Le nostre <span class="dim">tecnologie</span></h2>
+      <p class="section-desc">Utilizziamo strumenti moderni e collaudati per garantire affidabilità e scalabilità a lungo termine.</p>
+    </div>
+    <div class="tech-grid reveal">
+      <span class="tech-chip">Python</span>
+      <span class="tech-chip">Go</span>
+      <span class="tech-chip">Rust</span>
+      <span class="tech-chip">TypeScript</span>
+      <span class="tech-chip">C / C++</span>
+      <span class="tech-chip">React</span>
+      <span class="tech-chip">Node.js</span>
+      <span class="tech-chip">PostgreSQL</span>
+      <span class="tech-chip">Redis</span>
+      <span class="tech-chip">Kafka</span>
+      <span class="tech-chip">Docker</span>
+      <span class="tech-chip">Kubernetes</span>
+      <span class="tech-chip">Terraform</span>
+      <span class="tech-chip">AWS</span>
+      <span class="tech-chip">Azure</span>
+      <span class="tech-chip">Linux</span>
+      <span class="tech-chip">RTOS</span>
+      <span class="tech-chip">TensorFlow</span>
+      <span class="tech-chip">Git</span>
+      <span class="tech-chip">GraphQL</span>
+    </div>
+  </section>
+
+  <!-- ─── PROGETTI ─── -->
+  <section id="progetti">
+    <div class="reveal">
+      <div class="section-tag">// 04 — Casi Studio</div>
+      <h2 class="section-title">Progetti <span class="dim">selezionati</span></h2>
+      <p class="section-desc">Una selezione dei lavori che hanno generato valore reale per i nostri clienti.</p>
+    </div>
+    <div class="projects-grid reveal">
+
+      <div class="project-card">
+        <span class="project-tag">Industria 4.0</span>
+        <div class="project-name">SensorNet Industrial</div>
+        <div class="project-desc">Rete di sensori IoT per monitoraggio predittivo di impianti manifatturieri. Riduzione dei fermi macchina del 34%.</div>
+        <a href="#" class="project-link">Leggi il caso studio →</a>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag">Fintech</span>
+        <div class="project-name">PayCore Platform</div>
+        <div class="project-desc">Piattaforma di pagamenti digitali con architettura a microservizi, elaborazione 50k transazioni/sec.</div>
+        <a href="#" class="project-link">Leggi il caso studio →</a>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag">Pubblica Amministrazione</span>
+        <div class="project-name">CivicData Hub</div>
+        <div class="project-desc">Sistema di gestione e analisi dei dati urbani per smart city. Integrazione con 12 enti locali.</div>
+        <a href="#" class="project-link">Leggi il caso studio →</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── CONTATTI ─── -->
+  <section id="contact">
+    <div class="contact-inner">
+      <div class="reveal">
+        <div class="section-tag">// 05 — Contatti</div>
+        <h2 class="section-title">Iniziamo <span class="dim">a lavorare</span><br>insieme</h2>
+        <p class="section-desc" style="margin: 0 auto;">Raccontaci il tuo progetto. Risponderemo entro 24 ore lavorative.</p>
+      </div>
+      <form class="contact-form reveal" onsubmit="return false;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome</label>
+            <input class="form-input" type="text" placeholder="Mario Rossi" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Azienda</label>
+            <input class="form-input" type="text" placeholder="Acme S.r.l." />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="mario@azienda.it" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Messaggio</label>
+          <textarea class="form-textarea" placeholder="Descrivi brevemente il tuo progetto o la tua esigenza..."></textarea>
+        </div>
+        <button class="form-submit" type="submit">Invia il Messaggio</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="footer-logo">[IngMaurek]</div>
+    <div class="footer-copy">© 2026 IngMaurek. Tutti i diritti riservati.</div>
+    <ul class="footer-links">
+      <li><a href="#">Privacy</a></li>
+      <li><a href="#">Cookie</a></li>
+      <li><a href="#">LinkedIn</a></li>
+    </ul>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => io.observe(el));
+
+    // Navbar transparency on scroll
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      nav.style.background = window.scrollY > 40
+        ? 'rgba(8,13,18,0.95)'
+        : 'rgba(8,13,18,0.85)';
+    });
+  </script>
+</body>
+</html>
