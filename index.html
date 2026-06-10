@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidGen — Generatore di video per YouTube</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b25; --panel2:#1f2330; --border:#2a2f40;
+    --text:#e8eaf2; --muted:#9aa0b4; --accent:#7c5cff; --accent2:#22d3ee; --ok:#34d399; --warn:#fbbf24;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh}
+  header{display:flex; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--border)}
+  header .logo{width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px}
+  header h1{font-size:20px}
+  header .sub{color:var(--muted); font-size:13px}
+  .tabs{display:flex; gap:6px; padding:12px 24px 0}
+  .tab{padding:10px 18px; border:1px solid var(--border); border-bottom:none; border-radius:10px 10px 0 0; background:var(--panel); color:var(--muted); cursor:pointer; font-size:14px}
+  .tab.active{background:var(--panel2); color:var(--text); font-weight:600}
+  main{padding:0 24px 40px}
+  .page{display:none; background:var(--panel2); border:1px solid var(--border); border-radius:0 12px 12px 12px; padding:22px}
+  .page.active{display:block}
+  .cols{display:grid; grid-template-columns:380px 1fr; gap:22px}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+  label{display:block; font-size:12px; color:var(--muted); margin:14px 0 5px; text-transform:uppercase; letter-spacing:.06em}
+  textarea,input[type=text],select{width:100%; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:10px 12px; font-size:14px; font-family:inherit}
+  textarea{resize:vertical}
+  input[type=range]{width:100%; accent-color:var(--accent)}
+  button{background:var(--accent); color:#fff; border:none; border-radius:8px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer}
+  button:hover{filter:brightness(1.12)}
+  button:disabled{opacity:.45; cursor:not-allowed}
+  button.secondary{background:var(--panel); border:1px solid var(--border); color:var(--text)}
+  button.small{padding:7px 12px; font-size:13px}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .canvas-wrap{position:relative; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border)}
+  canvas{display:block; width:100%; height:auto}
+  .progress{height:8px; background:var(--panel); border-radius:4px; overflow:hidden; margin-top:12px}
+  .progress > div{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .2s}
+  .hint{font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:10px}
+  .pill{display:inline-block; background:var(--panel); border:1px solid var(--border); border-radius:99px; padding:4px 12px; font-size:12px; color:var(--muted); margin:3px 4px 0 0}
+  .pill b{color:var(--ok)}
+  .seo-box{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:14px}
+  .seo-box h3{font-size:13px; color:var(--accent2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px}
+  .seo-box p, .seo-box li{font-size:14px; line-height:1.6}
+  .seo-box ul{padding-left:20px}
+  .copy-btn{float:right}
+  .tag{display:inline-block; background:rgba(124,92,255,.15); border:1px solid rgba(124,92,255,.4); color:#c9bcff; border-radius:6px; padding:3px 9px; font-size:12.5px; margin:3px 4px 0 0}
+  .proj{display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-top:8px; font-size:14px}
+  .status{font-size:13px; color:var(--warn); margin-top:10px; min-height:18px}
+  a.dl{display:inline-block; margin-top:12px; color:var(--accent2); font-weight:600; font-size:15px}
+  footer{padding:14px 24px; color:var(--muted); font-size:12px; border-top:1px solid var(--border); margin-top:30px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">V</div>
+  <div>
+    <h1>VidGen</h1>
+    <div class="sub">Generatore di video "faceless" per YouTube — 100% nel browser, 100% gratis</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-page="editor">🎬 Video</div>
+  <div class="tab" data-page="thumb">🖼️ Miniatura</div>
+  <div class="tab" data-page="seo">🔎 SEO</div>
+  <div class="tab" data-page="projects">💾 Progetti</div>
+</div>
+
+<main>
+
+<!-- ===================== EDITOR ===================== -->
+<div class="page active" id="page-editor">
+  <div class="cols">
+    <div>
+      <label>Titolo del video</label>
+      <input type="text" id="videoTitle" placeholder="Es. 5 curiosità sullo spazio che non conosci" value="5 curiosità sullo spazio che non conosci">
+
+      <label>Script — separa le scene con una riga vuota</label>
+      <textarea id="script" rows="10">Lo sapevi che nello spazio nessuno può sentirti urlare? Il suono non si propaga nel vuoto.
+
+Su Venere un giorno dura più di un anno: il pianeta ruota più lentamente di quanto orbiti attorno al Sole.
+
+Le impronte degli astronauti sulla Luna resteranno lì per milioni di anni: non c'è vento che le cancelli.
+
+Una stella di neutroni è così densa che un cucchiaino della sua materia peserebbe miliardi di tonnellate.
+
+Se ti è piaciuto il video, iscriviti al canale per altre curiosità!</textarea>
+
+      <label>Stile visivo</label>
+      <select id="style">
+        <option value="photo">Foto reali + effetto Ken Burns (Picsum, API gratuita)</option>
+        <option value="gradient">Gradienti animati minimal</option>
+        <option value="dark">Dark elegante con particelle</option>
+      </select>
+
+      <label>Tema foto (parola seed per le immagini)</label>
+      <input type="text" id="seed" value="spazio">
+
+      <label>Durata per scena: <span id="durLabel">6</span> s</label>
+      <input type="range" id="duration" min="3" max="12" value="6" oninput="durLabel.textContent=this.value">
+
+      <label>Musica di sottofondo (generata proceduralmente, senza copyright)</label>
+      <select id="music">
+        <option value="ambient">Ambient rilassante</option>
+        <option value="tense">Misterioso / teso</option>
+        <option value="upbeat">Allegro</option>
+        <option value="none">Nessuna</option>
+      </select>
+
+      <div class="row" style="margin-top:18px">
+        <button id="btnPreview" class="secondary">▶ Anteprima</button>
+        <button id="btnRender">⬤ Genera video</button>
+        <button id="btnTTS" class="small secondary">🔊 Ascolta narrazione</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="hint">Il video viene renderizzato in <b>WebM 1280×720</b> direttamente nel tuo browser e scaricato sul tuo computer. Nessun server, nessun upload, nessun limite. YouTube accetta i file WebM nativamente.<br><br>💡 La narrazione vocale (TTS del browser) è solo in anteprima: per il voiceover nel video registra l'audio o caricalo in fase di montaggio su YouTube.</div>
+    </div>
+
+    <div>
+      <div class="canvas-wrap"><canvas id="cv" width="1280" height="720"></canvas></div>
+      <div class="progress"><div id="bar"></div></div>
+      <div id="dlWrap"></div>
+      <div style="margin-top:14px">
+        <span class="pill">API immagini: <b>picsum.photos</b> (gratis, senza chiave)</span>
+        <span class="pill">Musica: <b>Web Audio API</b></span>
+        <span class="pill">Render: <b>Canvas + MediaRecorder</b></span>
+        <span class="pill">Hosting: <b>GitHub Pages</b></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THUMBNAIL ===================== -->
+<div class="page" id="page-thumb">
+  <div class="cols">
+    <div>
+      <label>Testo principale (max 5-6 parole, grande impatto)</label>
+      <input type="text" id="thumbText" value="NON CI CREDERAI 😱">
+      <label>Sottotitolo</label>
+      <input type="text" id="thumbSub" value="5 curiosità sullo spazio">
+      <label>Stile</label>
+      <select id="thumbStyle">
+        <option value="bold">Giallo/nero ad alto contrasto</option>
+        <option value="neon">Neon viola/ciano</option>
+        <option value="clean">Pulito bianco/rosso</option>
+      </select>
+      <label>Immagine di sfondo (seed)</label>
+      <input type="text" id="thumbSeed" value="galassia">
+      <div class="row" style="margin-top:18px">
+        <button id="btnThumb">Genera miniatura</button>
+        <button id="btnThumbDl" class="secondary" disabled>⬇ Scarica PNG</button>
+      </div>
+      <div class="hint">Formato 1280×720, quello richiesto da YouTube. Testo grande, contrasto alto e una faccia o emoji aumentano il CTR.</div>
+    </div>
+    <div>
+      <div class="canvas-wrap"><canvas id="cvThumb" width="1280" height="720"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SEO ===================== -->
+<div class="page" id="page-seo">
+  <button id="btnSeo">Genera suggerimenti SEO dallo script</button>
+  <div id="seoOut"></div>
+  <div class="hint">I suggerimenti sono generati localmente analizzando il tuo script: titoli alternativi, descrizione ottimizzata, tag e capitoli con timestamp basati sulla durata delle scene.</div>
+</div>
+
+<!-- ===================== PROJECTS ===================== -->
+<div class="page" id="page-projects">
+  <div class="row">
+    <input type="text" id="projName" placeholder="Nome progetto" style="max-width:300px">
+    <button id="btnSave">Salva progetto corrente</button>
+  </div>
+  <div id="projList"></div>
+  <div class="hint">I progetti sono salvati nel localStorage del browser: restano disponibili anche dopo aver chiuso la pagina.</div>
+</div>
+
+</main>
+
+<footer>VidGen — open source, zero costi: API gratuite senza chiave + GitHub Pages. Fatto con Canvas, Web Audio e MediaRecorder.</footer>
+
+<script>
+"use strict";
+/* ============ Tabs ============ */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('page-' + t.dataset.page).classList.add('active');
+});
+
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = 1280, H = 720, FPS = 30;
+const statusEl = document.getElementById('status'), bar = document.getElementById('bar');
+
+function getScenes(){
+  return document.getElementById('script').value.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+}
+function setStatus(msg){ statusEl.textContent = msg; }
+
+/* ============ Immagini (picsum.photos — gratis, no key, CORS ok) ============ */
+function loadImage(seed, i){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null); // fallback gradiente
+    img.src = `https://picsum.photos/seed/${encodeURIComponent(seed)}-${i}/1280/720`;
+  });
+}
+
+/* ============ Word wrap ============ */
+function wrapText(text, maxW, font){
+  ctx.font = font;
+  const words = text.split(' '), lines = [];
+  let line = '';
+  for(const w of words){
+    const test = line ? line + ' ' + w : w;
+    if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = w; }
+    else line = test;
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+/* ============ Disegno scena ============ */
+const PALETTES = [
+  ['#7c5cff','#22d3ee'], ['#f43f5e','#fb923c'], ['#10b981','#3b82f6'],
+  ['#8b5cf6','#ec4899'], ['#f59e0b','#ef4444'], ['#06b6d4','#6366f1']
+];
+let particles = Array.from({length:60}, () => ({
+  x: Math.random()*W, y: Math.random()*H, r: 1 + Math.random()*2.5,
+  vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4
+}));
+
+function drawScene(sceneIdx, scenes, t, images, style, title){
+  const text = scenes[sceneIdx];
+  const pal = PALETTES[sceneIdx % PALETTES.length];
+
+  // sfondo
+  if(style === 'photo' && images[sceneIdx]){
+    const z = 1.05 + t * 0.12;                       // Ken Burns zoom
+    const dx = (W - W*z)/2 + Math.sin(sceneIdx)*30*t;
+    const dy = (H - H*z)/2 + Math.cos(sceneIdx)*20*t;
+    ctx.drawImage(images[sceneIdx], dx, dy, W*z, H*z);
+    ctx.fillStyle = 'rgba(8,10,18,0.55)';
+    ctx.fillRect(0,0,W,H);
+  } else if(style === 'dark'){
+    ctx.fillStyle = '#0b0d14'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = 'rgba(124,92,255,0.7)';
+    for(const p of particles){
+      p.x = (p.x + p.vx + W) % W; p.y = (p.y + p.vy + H) % H;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
+    }
+    const rg = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, 700);
+    rg.addColorStop(0,'rgba(124,92,255,0.10)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0,0,W,H);
+  } else {
+    const ang = t * 0.5 + sceneIdx;
+    const g = ctx.createLinearGradient(
+      W/2 + Math.cos(ang)*W/2, H/2 + Math.sin(ang)*H/2,
+      W/2 - Math.cos(ang)*W/2, H/2 - Math.sin(ang)*H/2);
+    g.addColorStop(0, pal[0]); g.addColorStop(1, pal[1]);
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(0,0,W,H);
+  }
+
+  // testo con fade/slide-in
+  const fade = Math.min(1, t*2.5);
+  const slide = (1-fade)*40;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 18;
+  const font = 'bold 52px "Segoe UI", sans-serif';
+  const lines = wrapText(text, W*0.78, font);
+  ctx.font = font; ctx.fillStyle = '#ffffff';
+  const lh = 68, y0 = H/2 - (lines.length-1)*lh/2 + slide;
+  lines.forEach((l,i) => ctx.fillText(l, W/2, y0 + i*lh));
+  ctx.restore();
+
+  // barra progresso scene + watermark titolo
+  ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(0, H-6, W, 6);
+  ctx.fillStyle = pal[1]; ctx.fillRect(0, H-6, W * ((sceneIdx + Math.min(t,1))/scenes.length), 6);
+  ctx.font = '600 22px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.shadowBlur = 0;
+  ctx.fillText(title, 28, H-28);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${sceneIdx+1}/${scenes.length}`, W-28, H-28);
+}
+
+/* ============ Musica procedurale (Web Audio) ============ */
+const CHORDS = {
+  ambient: [[220,277,330],[196,247,294],[175,220,262],[196,247,294]],
+  tense:   [[196,233,294],[185,220,277],[196,233,294],[175,208,262]],
+  upbeat:  [[262,330,392],[294,370,440],[330,415,494],[294,370,440]]
+};
+function startMusic(audioCtx, dest, kind, totalDur){
+  if(kind === 'none') return;
+  const master = audioCtx.createGain();
+  master.gain.value = 0.07;
+  master.connect(dest);
+  const chords = CHORDS[kind], chordDur = kind === 'upbeat' ? 1.6 : 3.2;
+  let t = audioCtx.currentTime;
+  const end = t + totalDur;
+  let ci = 0;
+  while(t < end){
+    const chord = chords[ci % chords.length];
+    for(const f of chord){
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = kind === 'upbeat' ? 'square' : 'triangle';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(kind === 'upbeat' ? 0.16 : 0.25, t + 0.25);
+      g.gain.linearRampToValueAtTime(0.0001, t + chordDur);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + chordDur + 0.1);
+    }
+    if(kind === 'upbeat'){ // semplice basso ritmico
+      for(let b=0; b<4; b++){
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = chord[0]/2;
+        const bt = t + b * chordDur/4;
+        g.gain.setValueAtTime(0.3, bt);
+        g.gain.exponentialRampToValueAtTime(0.001, bt + 0.3);
+        o.connect(g); g.connect(master);
+        o.start(bt); o.stop(bt + 0.35);
+      }
+    }
+    t += chordDur; ci++;
+  }
+}
+
+/* ============ Anteprima ============ */
+let previewRAF = null;
+document.getElementById('btnPreview').onclick = async () => {
+  cancelAnimationFrame(previewRAF);
+  const scenes = getScenes();
+  if(!scenes.length) return setStatus('Scrivi almeno una scena.');
+  const style = document.getElementById('style').value;
+  const dur = +document.getElementById('duration').value;
+  const title = document.getElementById('videoTitle').value || 'VidGen';
+  setStatus('Carico le immagini…');
+  const images = style === 'photo'
+    ? await Promise.all(scenes.map((_,i) => loadImage(document.getElementById('seed').value || 'random', i)))
+    : [];
+  setStatus('Anteprima in corso…');
+  const start = performance.now();
+  (function loop(now){
+    const el = (now - start)/1000;
+    const idx = Math.floor(el/dur);
+    if(idx >= scenes.length){ setStatus('Anteprima completata.'); return; }
+    drawScene(idx, scenes, (el % dur)/dur * dur/3, images, style, title);
+    bar.style.width = (el/(scenes.length*dur)*100) + '%';
+    previewRAF = requestAnimationFrame(loop);
+  })(start);
+};
+
+/* ============ Render & registrazione ============ */
+document.getElementById('btnRender').onclick = async () => {
+  cancelAnimationFrame(previewRAF);
+  const scenes = getScenes();
+  if(!scenes.length) return setStatus('Scrivi almeno una scena.');
+  const style = document.getElementById('style').value;
+  const dur = +document.getElementById('duration').value;
+  const title = document.getElementById('videoTitle').value || 'VidGen';
+  const music = document.getElementById('music').value;
+  const total = scenes.length * dur;
+  const btn = document.getElementById('btnRender');
+  btn.disabled = true;
+  document.getElementById('dlWrap').innerHTML = '';
+  setStatus('Carico le immagini…');
+
+  const images = style === 'photo'
+    ? await Promise.all(scenes.map((_,i) => loadImage(document.getElementById('seed').value || 'random', i)))
+    : [];
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  await audioCtx.resume();
+  const dest = audioCtx.createMediaStreamDestination();
+  startMusic(audioCtx, dest, music, total + 0.5);
+
+  const stream = cv.captureStream(FPS);
+  if(music !== 'none') dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+
+  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 5000000 });
+  const chunks = [];
+  rec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    audioCtx.close();
+    const blob = new Blob(chunks, { type:'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const safe = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50) || 'video';
+    document.getElementById('dlWrap').innerHTML =
+      `<a class="dl" href="${url}" download="${safe}.webm">⬇ Scarica "${safe}.webm" (${(blob.size/1048576).toFixed(1)} MB)</a>`;
+    setStatus('Video pronto! Caricalo direttamente su YouTube.');
+    bar.style.width = '100%';
+    btn.disabled = false;
+  };
+
+  setStatus(`Registrazione: ${total}s di video…`);
+  rec.start(500);
+  const start = performance.now();
+  (function loop(now){
+    const el = (now - start)/1000;
+    if(el >= total){ rec.stop(); return; }
+    const idx = Math.min(Math.floor(el/dur), scenes.length-1);
+    drawScene(idx, scenes, (el % dur)/dur * dur/3, images, style, title);
+    bar.style.width = (el/total*100) + '%';
+    setStatus(`Registrazione… ${Math.floor(el)}/${total}s — scena ${idx+1}/${scenes.length}`);
+    requestAnimationFrame(loop);
+  })(start);
+};
+
+/* ============ TTS anteprima ============ */
+document.getElementById('btnTTS').onclick = () => {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(getScenes().join('. '));
+  u.lang = 'it-IT'; u.rate = 1;
+  speechSynthesis.speak(u);
+};
+
+/* ============ Miniatura ============ */
+const cvT = document.getElementById('cvThumb'), ctxT = cvT.getContext('2d');
+document.getElementById('btnThumb').onclick = async () => {
+  const text = document.getElementById('thumbText').value;
+  const sub = document.getElementById('thumbSub').value;
+  const st = document.getElementById('thumbStyle').value;
+  const img = await new Promise(res => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => res(im); im.onerror = () => res(null);
+    im.src = `https://picsum.photos/seed/${encodeURIComponent(document.getElementById('thumbSeed').value||'x')}/1280/720`;
+  });
+  if(img) ctxT.drawImage(img, 0, 0, W, H);
+  else { ctxT.fillStyle = '#111'; ctxT.fillRect(0,0,W,H); }
+
+  const styles = {
+    bold:  { overlay:'rgba(0,0,0,0.45)', fill:'#ffe600', stroke:'#000', sub:'#fff' },
+    neon:  { overlay:'rgba(10,5,30,0.55)', fill:'#22d3ee', stroke:'#7c5cff', sub:'#c9bcff' },
+    clean: { overlay:'rgba(255,255,255,0.18)', fill:'#ffffff', stroke:'#e11d48', sub:'#fff' }
+  };
+  const s = styles[st];
+  ctxT.fillStyle = s.overlay; ctxT.fillRect(0,0,W,H);
+  ctxT.textAlign = 'center';
+  ctxT.font = '900 110px "Segoe UI", Arial, sans-serif';
+  ctxT.lineWidth = 14; ctxT.lineJoin = 'round';
+  ctxT.strokeStyle = s.stroke; ctxT.fillStyle = s.fill;
+  const words = text.split(' ');
+  const mid = Math.ceil(words.length/2);
+  const l1 = words.slice(0,mid).join(' '), l2 = words.slice(mid).join(' ');
+  ctxT.strokeText(l1, W/2, l2 ? 300 : 360); ctxT.fillText(l1, W/2, l2 ? 300 : 360);
+  if(l2){ ctxT.strokeText(l2, W/2, 430); ctxT.fillText(l2, W/2, 430); }
+  ctxT.font = '700 46px "Segoe UI", sans-serif';
+  ctxT.lineWidth = 8; ctxT.strokeStyle = 'rgba(0,0,0,0.85)'; ctxT.fillStyle = s.sub;
+  ctxT.strokeText(sub, W/2, 580); ctxT.fillText(sub, W/2, 580);
+  document.getElementById('btnThumbDl').disabled = false;
+};
+document.getElementById('btnThumbDl').onclick = () => {
+  const a = document.createElement('a');
+  a.download = 'miniatura.png';
+  a.href = cvT.toDataURL('image/png');
+  a.click();
+};
+
+/* ============ SEO ============ */
+const STOPWORDS = new Set(('di a da in con su per tra fra il lo la i gli le un uno una e o ma se che chi cui non più come dove quando anche ancora già solo questo questa quello quella suo sua suoi sue mio mia tuo tua nel nella della delle dei degli alla alle al ai è sono era così ci si li ne vi ti mi perché molto poco tanto essere avere fare può cosa sapevi resteranno').split(' '));
+document.getElementById('btnSeo').onclick = () => {
+  const scenes = getScenes();
+  const title = document.getElementById('videoTitle').value || 'Il mio video';
+  const dur = +document.getElementById('duration').value;
+  const text = scenes.join(' ').toLowerCase().replace(/[^\wàèéìòù\s]/g,' ');
+  const freq = {};
+  for(const w of text.split(/\s+/)) if(w.length > 3 && !STOPWORDS.has(w)) freq[w] = (freq[w]||0)+1;
+  const top = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0,12).map(e => e[0]);
+
+  const titles = [
+    `${title} | Non ci crederai`,
+    `${top[0] ? top[0].toUpperCase() + ': ' : ''}${title}`,
+    `La verità su ${top[0] || 'questo argomento'} (${new Date().getFullYear()})`,
+    `${title} — spiegato in ${Math.round(scenes.length*dur/60*10)/10} minuti`
+  ];
+  const chapters = scenes.map((s,i) => {
+    const sec = i*dur, m = Math.floor(sec/60), ss = String(sec%60).padStart(2,'0');
+    return `${m}:${ss} — ${s.split(' ').slice(0,7).join(' ')}…`;
+  });
+  const desc = `${title}\n\nIn questo video: ${top.slice(0,4).join(', ')}.\n\nCAPITOLI\n${chapters.join('\n')}\n\n👍 Lascia un like e iscriviti per non perderti i prossimi video!\n\n#${top.slice(0,3).join(' #')}`;
+
+  document.getElementById('seoOut').innerHTML = `
+    <div class="seo-box"><h3>Titoli alternativi</h3><ul>${titles.map(t => `<li>${t}</li>`).join('')}</ul></div>
+    <div class="seo-box"><h3>Descrizione ottimizzata <button class="small secondary copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.querySelector('pre').textContent)">Copia</button></h3><pre style="white-space:pre-wrap; font-family:inherit; font-size:14px; line-height:1.6">${desc}</pre></div>
+    <div class="seo-box"><h3>Tag suggeriti</h3>${top.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+};
+
+/* ============ Progetti (localStorage) ============ */
+const LS_KEY = 'vidgen_projects';
+function getProjects(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } }
+function renderProjects(){
+  const p = getProjects();
+  document.getElementById('projList').innerHTML = Object.keys(p).map(name => `
+    <div class="proj"><span>📁 ${name} <small style="color:var(--muted)">— ${new Date(p[name].ts).toLocaleString('it-IT')}</small></span>
+    <span class="row">
+      <button class="small secondary" onclick="loadProject('${name.replace(/'/g,"\\'")}')">Apri</button>
+      <button class="small secondary" onclick="delProject('${name.replace(/'/g,"\\'")}')">🗑</button>
+    </span></div>`).join('') || '<p class="hint">Nessun progetto salvato.</p>';
+}
+document.getElementById('btnSave').onclick = () => {
+  const name = document.getElementById('projName').value.trim() || document.getElementById('videoTitle').value || 'Senza nome';
+  const p = getProjects();
+  p[name] = {
+    ts: Date.now(),
+    title: document.getElementById('videoTitle').value,
+    script: document.getElementById('script').value,
+    style: document.getElementById('style').value,
+    seed: document.getElementById('seed').value,
+    duration: document.getElementById('duration').value,
+    music: document.getElementById('music').value
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(p));
+  renderProjects();
+};
+window.loadProject = name => {
+  const d = getProjects()[name]; if(!d) return;
+  document.getElementById('videoTitle').value = d.title;
+  document.getElementById('script').value = d.script;
+  document.getElementById('style').value = d.style;
+  document.getElementById('seed').value = d.seed;
+  document.getElementById('duration').value = d.duration;
+  document.getElementById('durLabel').textContent = d.duration;
+  document.getElementById('music').value = d.music;
+  document.querySelector('.tab[data-page=editor]').click();
+};
+window.delProject = name => {
+  const p = getProjects(); delete p[name];
+  localStorage.setItem(LS_KEY, JSON.stringify(p));
+  renderProjects();
+};
+renderProjects();
+
+/* ============ Frame iniziale ============ */
+drawScene(0, ['VidGen — premi Anteprima o Genera video'], 0.5, [], 'dark', 'VidGen');
+</script>
+</body>
+</html>
